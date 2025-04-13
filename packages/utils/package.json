@@ -1,0 +1,47 @@
+{
+  "name": "@ariijs/utils",
+  "version": "1.0.0",
+  "description": "utility functions that i use for arii and more",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts"
+  },
+  "scripts": {
+    "push": "npm run tools:clean && git add . && git commit -m \"update\" && git push",
+    "prepublish": "npm run build",
+    "build:cjs": "tsc -p tools/config/tsconfig.cjs.json",
+    "build:esm": "tsc -p tools/config/tsconfig.esm.json",
+    "tools:clean": "node tools/scripts/clean.mjs",
+    "tools:pack": "node tools/scripts/pack.mjs",
+    "build": "npm run tools:clean && npm run build:cjs && npm run build:esm && npm run tools:pack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ByAhri/arii.js.git"
+  },
+  "keywords": [
+    "utility",
+    "esm",
+    "commonjs",
+    "extras"
+  ],
+  "author": "ByAhri",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ByAhri/arii.js/issues"
+  },
+  "homepage": "https://github.com/ByAhri/arii.js#readme",
+  "dependencies": {
+    "@sapphire/snowflake": "^3.5.5",
+    "colors": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.3"
+  }
+}
