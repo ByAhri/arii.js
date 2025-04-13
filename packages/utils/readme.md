@@ -1,5 +1,3 @@
-@byahri/utils
-
 utility functions that i use for arii and more
 
 ## contents
@@ -10,13 +8,13 @@ utility functions that i use for arii and more
 ## install
 
 ```bash
-npm install @byahri/utils
+npm install @ariijs/utils
 ```
 
 ## usage
 ### typescript or esm
 ```typescript
-import { Tokens, BufferEncodingType, Format } from "@byahri/utils";
+import { Tokens, BufferEncodingType, Format } from "@ariijs/utils";
 
 const randomToken = Tokens.getRandomToken(32, BufferEncodingType.base64url);
 const snowflake = Tokens.getSnowflake().toString();
@@ -33,7 +31,7 @@ console.log(formatTime); // output: 53 min 24 sec
 ### commonjs
 
 ```javascript
-const { Tokens, BufferEncodingType, Format } = require("@byahri/utils");
+const { Tokens, BufferEncodingType, Format } = require("@ariijs/utils");
 
 const randomToken = Tokens.getRandomToken(32, BufferEncodingType.base64url);
 const snowflake = Tokens.getSnowflake().toString();
