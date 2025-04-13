@@ -1,0 +1,48 @@
+{
+  "name": "@ariijs/lavalink-client",
+  "version": "1.0.0",
+  "description": "arii \"plugin\" / extras for lavalink-client package",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "require": "./dist/cjs/index.js",
+    "import": "./dist/esm/index.js",
+    "types": "./dist/types/index.d.ts"
+  },
+  "scripts": {
+    "push": "git add . && git commit -m \"update\" && git push",
+    "prepublish": "npm run build",
+    "build:cjs": "tsc -p tools/config/tsconfig.cjs.json",
+    "build:esm": "tsc -p tools/config/tsconfig.esm.json",
+    "tools:clean": "node tools/scripts/clean.mjs",
+    "tools:pack": "node tools/scripts/pack.mjs",
+    "build": "npm run tools:clean && npm run build:cjs && npm run build:esm && npm run tools:pack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ByAhri/arii.js.git"
+  },
+  "keywords": [
+    "lavalink",
+    "lavalink-client",
+    "esm",
+    "commonjs",
+    "extras"
+  ],
+  "author": "ByAhri",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ByAhri/arii.js/issues"
+  },
+  "homepage": "https://github.com/ByAhri/arii.js#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "lavalink-client": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,11 @@
+# Ignore everything except the necessary files
+# Ignore source files
+src
+tsconfig*.json
+
+# Ignore development files
+.gitignore
+.env
+node_modules
+package-lock.json
+tools
