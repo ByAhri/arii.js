@@ -38,6 +38,7 @@
   },
   "homepage": "https://github.com/ByAhri/arii.js#readme",
   "dependencies": {
+    "@ariijs/utils": "^1.0.0",
     "colors": "^1.4.0",
     "lavalink-client": "^2.5.0"
   },

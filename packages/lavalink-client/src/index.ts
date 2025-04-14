@@ -8,3 +8,8 @@ import { Player } from "./player/player.js";
 import { Queue } from "./player/queue.js";
 import { LavalinkManager } from "./manager/lavalinkManager.js";
 
+export default {
+    Player,
+    Queue,
+    LavalinkManager
+}
