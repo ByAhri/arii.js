@@ -1,8 +1,8 @@
 import { existsSync, writeFileSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { Esm } from "@ariijs/utils";
+import { join } from "path";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = Esm.getDirname(import.meta.url);
 
 const writePackageJson = (path) => {
     if (!existsSync(path)) return console.error("no path found for: ", path);

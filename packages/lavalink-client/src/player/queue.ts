@@ -1,18 +1,79 @@
 import { ManagerQueueOptions, ManagerUtils, Queue as Qe, QueueChangesWatcher, QueueSaver, StoredQueue, Track, UnresolvedTrack } from "lavalink-client";
 import { TrackOrTracks, QueueResult } from "../types/index.js";
 import { Tokens } from "@ariijs/utils";
+import { LavalinkManager } from "../manager/lavalinkManager.js";
 
 export class Queue extends Qe {
+    // public tracks: (Track | UnresolvedTrack)[] = [];
+    // public previous: Track[] = [];
 
     protected managerUtilsCustom = new ManagerUtils();
     protected queueChangesCustom: QueueChangesWatcher | null;
     protected readonly guildIdCustom: string = "";
 
-    constructor(guildId: string, data?: Partial<StoredQueue>, QueueSaver?: QueueSaver, queueOptions?: ManagerQueueOptions) {
+    protected readonly manager: LavalinkManager; // Reference to the LavalinkManager
+    
+
+    constructor(guildId: string, manager: LavalinkManager, data: Partial<StoredQueue> = {}, QueueSaver?: QueueSaver, queueOptions?: ManagerQueueOptions) {
         super(guildId, data, QueueSaver, queueOptions);
 
+        this.manager = manager; // Assign the manager
         this.queueChangesCustom = queueOptions?.queueChangesWatcher || null;
         this.guildIdCustom = guildId;
+
+        // this.previous = Array.isArray(data.previous) && data.previous.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.previous.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
+        // this.tracks = Array.isArray(data.tracks) && data.tracks.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.tracks.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
+    };
+
+    /** leaves the queue empty and sets the given tracks to the queue */
+    public set setTracks(trackOrTracks: TrackOrTracks) {
+        let tracksAdded: (Track | UnresolvedTrack)[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
+            .filter(v => this.managerUtilsCustom.isTrack(v) || this.managerUtilsCustom.isUnresolvedTrack(v))
+            .map((track) => {
+                if (!track.userData?.cid) { // only add custom id if it doesn't exist
+                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                    if (!track.userData) {
+                        track.userData = {
+                            cid: snowflake
+                        };
+                    } else {
+                        track.userData.cid = snowflake;
+                    };
+                };
+                // if track source is played from deezer provider, add the arl to the userData
+                if (["deezer", "spotify", "apple"].some(v => track.info.sourceName?.includes(v))) {
+                    if (!track.userData.arl) {
+                        const arl = this.manager.getDeezerArl();
+                        if (arl) track.userData.arl = arl;
+                    };
+                }
+                return track;
+            })
+            ;
+        if (tracksAdded.length) this.tracks.splice(0, this.tracks.length, ...tracksAdded)
+        else this.tracks.splice(0, this.tracks.length);
+    }
+
+    /** leaves the previous tracks empty and sets the given tracks to the previous tracks */
+    public set setPrevious(trackOrTracks: TrackOrTracks) {
+        let tracksAdded: Track[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
+            .filter(v => this.managerUtilsCustom.isTrack(v))
+            .map((track) => {
+                if (!track.userData?.cid) { // only add custom id if it doesn't exist
+                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                    if (!track.userData) {
+                        track.userData = {
+                            cid: snowflake
+                        };
+                    } else {
+                        track.userData.cid = snowflake;
+                    };
+                };
+                return track;
+            })
+            ;
+        if (tracksAdded.length) this.previous.splice(0, this.previous.length, ...tracksAdded)
+        else this.previous.splice(0, this.previous.length);
     }
 
     /**
@@ -35,6 +96,16 @@ export class Queue extends Qe {
                         track.userData.cid = snowflake;
                     };
                 };
+                // if track source is played from deezer provider, add the arl to the userData
+                // check if any arls are defined in the lavalink manager constructor
+                if (this.manager.deezer && (this.manager.deezer.arls?.length || this.manager.deezer.premiumArls?.length)) {
+                    if (["deezer", "spotify", "apple"].some(v => track.info.sourceName?.includes(v))) {
+                        if (!track.userData.arl) {
+                            const arl = this.manager.getDeezerArl();
+                            if (arl) track.userData.arl = arl;
+                        };
+                    };
+                }
                 return track;
             })
             ;
@@ -90,6 +161,13 @@ export class Queue extends Qe {
                             track.userData.cid = snowflake;
                         };
                     };
+                    // if track source is played from deezer provider, add the arl to the userData
+                    if (["deezer", "spotify", "apple"].some(v => track.info.sourceName?.includes(v))) {
+                        if (!track.userData?.arl) {
+                            const arl = this.manager.getDeezerArl();
+                            if (arl) track.userData.arl = arl;
+                        };
+                    }
                     return track;
                 })
                 ;

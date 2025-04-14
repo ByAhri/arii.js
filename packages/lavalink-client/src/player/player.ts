@@ -12,7 +12,7 @@ export class Player extends PL {
         this.LavalinkManager = lavalinkManager;
 
         let queueSaver = this.LavalinkManager.options.queueOptions ? new QueueSaver(this.LavalinkManager.options.queueOptions) : undefined
-        this.queue = new Queue(this.guildId, {}, queueSaver, this.LavalinkManager.options.queueOptions); // Initialize with AriiQueue
+        this.queue = new Queue(this.guildId, this.LavalinkManager, {}, queueSaver, this.LavalinkManager.options.queueOptions); // Initialize with AriiQueue
     }
 
     /**
