@@ -1,4 +1,4 @@
-utility functions that i use for arii and more
+arii \"plugin\" / extras for lavalink-client package. fully compatible with commonjs and esm enviroments.
 
 ## contents
 
@@ -8,39 +8,67 @@ utility functions that i use for arii and more
 ## install
 
 ```bash
-npm install @ariijs/utils
+npm install @ariijs/lavalink-client
 ```
 
 ## usage
 ### typescript or esm
 ```typescript
-import { Tokens, BufferEncodingType, Format } from "@ariijs/utils";
+// import LavalinkManager from this package instead of lavalink-client
+import { LavalinkManager } from "@ariijs/lavalink-client";
+import { Client } from "discord.js";
 
-const randomToken = Tokens.getRandomToken(32, BufferEncodingType.base64url);
-const snowflake = Tokens.getSnowflake().toString();
+const client = new Client({
+    intents: intents,
+    ...
+});
 
-const time = 3204900; // Example timestamp in milliseconds
+client.lava = new LavalinkManager(...);
 
-const formatTime = Format.simpleTimeFormat(time, true);
+// always import @ariijs/lavalink-client classes instead of lavalink-client classes if they exist
+// example
+import { Player } from "@ariijs/lavalink-client";
+import { Track } from "lavalink-client"; // doesn't exists in @ariijs/lavalink-client
 
-console.log(randomToken); // output: 7hUjwGQZJhumhGE7Y2zhpr7P9BnrTgttP-GWPJgKP44
-console.log(snowflake); // output: 1360781405386182656
-console.log(formatTime); // output: 53 min 24 sec
+export default {
+    name: "trackStart",
+    once: false,
+    async execute(player: Player, track: Track) {
+        player.queue.add(tracks); // add tracks
+        player.previous(); // go back to previous track
+
+        // cid (custom id) is a property that @ariijs package sets to all track's userData object.
+        // useful to identify precisely each track regardless of them having repeated identifiers
+        // or encoded values when multiple tracks in the queue are the same, from the same source
+        console.log(track.userData?.cid); // output: random token / id
+    };
+}
 ```
 
 ### commonjs
 
 ```javascript
-const { Tokens, BufferEncodingType, Format } = require("@ariijs/utils");
+// require LavalinkManager from this package instead of lavalink-client
+const { LavalinkManager, Player } = require("@ariijs/lavalink-client");
+const { Client } = require("discord.js");
 
-const randomToken = Tokens.getRandomToken(32, BufferEncodingType.base64url);
-const snowflake = Tokens.getSnowflake().toString();
+const client = new Client({
+    intents: intents,
+    ...
+});
 
-const time = 3204900; // Example timestamp in milliseconds
+client.lava = new LavalinkManager(...);
 
-const formatTime = Format.simpleTimeFormat(time, true);
+// example usage
+module.exports = {
+    name: "trackStart",
+    once: false,
+    async execute(player, track) {
+        player.queue.add(tracks); // add tracks
+        player.previous(); // go back to previous track
 
-console.log(randomToken); // output: 7hUjwGQZJhumhGE7Y2zhpr7P9BnrTgttP-GWPJgKP44
-console.log(snowflake); // output: 1360781405386182656
-console.log(formatTime); // output: 53 min 24 sec
+        // cid (custom id) is a property that @ariijs package sets to all track's userData object.
+        console.log(track.userData?.cid); // output: random token / id
+    }
+};
 ```
