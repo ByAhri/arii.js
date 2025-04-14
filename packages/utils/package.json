@@ -12,7 +12,6 @@
     "types": "./dist/types/index.d.ts"
   },
   "scripts": {
-    "push": "git add . && git commit -m \"update\" && git push",
     "prepublish": "npm run build",
     "build:cjs": "tsc -p tools/config/tsconfig.cjs.json",
     "build:esm": "tsc -p tools/config/tsconfig.esm.json",
