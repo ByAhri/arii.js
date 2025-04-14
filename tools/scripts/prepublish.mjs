@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
-import { Esm } from "../../packages/utils/dist/esm/index.js";
+import { Esm } from "../../libs/utils/dist/esm/index.js";
 import "colors";
 
 const __dirname = Esm.getDirname(import.meta.url);
 
-const packagesPath = path.join(__dirname, "../../packages");
+const packagesPath = path.join(__dirname, "../../libs");
 
 const packages = fs.readdirSync(packagesPath);
 for (const pkg of packages) {
