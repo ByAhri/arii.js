@@ -153,7 +153,7 @@ export class Queue extends Qe {
             }
         };
 
-        if (this.shuffled) this.backup.push(...tracksAdded);
+        if (this.shuffled) this.backup.push(...tracksAdded.filter(t => this.backup.some(t2 => t2.userData!.cid !== t.userData!.cid)));
 
         // save the queue
         await this.utils.save();
@@ -227,7 +227,7 @@ export class Queue extends Qe {
         // save the queue
         await this.utils.save();
 
-        if (tracksAdded.length && this.shuffled) this.backup.push(...tracksAdded);
+        if (tracksAdded.length && this.shuffled) this.backup.push(...tracksAdded.filter(t => this.backup.some(t2 => t2.userData!.cid !== t.userData!.cid)));
 
         return {
             queueSize: this.tracks.length,
@@ -259,19 +259,26 @@ export class Queue extends Qe {
                 if (cids.includes(t.userData!.cid)) return true
                 else return false;
             });
-            if (this.current) bc = this.backup.filter(t => this.current?.userData!.cid === t.userData!.cid)
+            console.log("toggle off: ", bc.length);
+            if (this.current) bc = bc.filter(t => this.current?.userData!.cid !== t.userData!.cid)
             // restore queue
             this.setPrevious = bc.slice(0, currentTrackIndex).filter(t => this.managerUtilsCustom.isTrack(t));
             this.setTracks = bc.slice(currentTrackIndex);
         } else {
             this.isShuffled = true;
             this.backup = [];
-            if (this.previous.length) this.backup.push(...[...this.previous].reverse());
-            if (this.current) this.backup.push(this.current);
-            if (this.tracks.length) this.backup.push(...this.tracks);
+            console.log("toggle on: ", this.backup.length);
+            if (this.previous.length) this.backup.push(...[...this.previous].reverse().filter(t => this.backup.some(t2 => t2.userData!.cid !== t.userData!.cid)));
+            if (this.current && this.backup.some(t => t.userData!.cid !== this.current?.userData!.cid)) this.backup.push(this.current);
+            if (this.tracks.length) this.backup.push(...this.tracks.filter(t => this.backup.some(t2 => t2.userData!.cid !== t.userData!.cid)));
+            console.log("toggle on previous: ", this.previous.length, " tracks: ", this.tracks.length);
             // shuffle the queue
             this.setPrevious = this.shufflePrevious(this.previous);
             this.setTracks = this.shuffleTracks(this.tracks);
+
+            console.log("toggle on: ", this.backup.length);
+
+            console.log("-------------------------------------------");
         }
         return this.tracks;
     }
