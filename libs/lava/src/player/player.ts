@@ -1,10 +1,12 @@
-import { Player as PL, PlayerOptions, QueueSaver } from "lavalink-client";
+import { Player as PL, PlayerOptions, QueueSaver, RepeatMode } from "lavalink-client";
 import { Queue } from "./queue.js";
 import { LavalinkManager } from "../manager/lavalinkManager.js";
 
 export class Player extends PL {
-    public LavalinkManager: LavalinkManager;
-    public queue: Queue;
+    LavalinkManager: LavalinkManager;
+    queue: Queue;
+    /** returns true if the player is paused (track paused) */
+    paused: boolean = false;
 
     constructor(options: PlayerOptions, lavalinkManager: LavalinkManager) {
         super(options, lavalinkManager);
@@ -13,7 +15,7 @@ export class Player extends PL {
 
         let queueSaver = this.LavalinkManager.options.queueOptions ? new QueueSaver(this.LavalinkManager.options.queueOptions) : undefined
         this.queue = new Queue(this.guildId, this.LavalinkManager, {}, queueSaver, this.LavalinkManager.options.queueOptions); // Initialize with AriiQueue
-    }
+    };
 
     /**
      * similar to skip, but it goes to the previous track. use this instead of adding the previous track to the queue and skipping for yourself

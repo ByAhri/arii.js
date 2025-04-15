@@ -7,12 +7,15 @@ export class Queue extends Qe {
     // public tracks: (Track | UnresolvedTrack)[] = [];
     // public previous: Track[] = [];
 
-    protected managerUtilsCustom = new ManagerUtils();
+    protected isShuffled: boolean = false;
+    backup: (Track | UnresolvedTrack)[] = [];
+
+    protected managerUtilsCustom: ManagerUtils;
     protected queueChangesCustom: QueueChangesWatcher | null;
     protected readonly guildIdCustom: string = "";
 
     protected readonly manager: LavalinkManager; // Reference to the LavalinkManager
-    
+
 
     constructor(guildId: string, manager: LavalinkManager, data: Partial<StoredQueue> = {}, QueueSaver?: QueueSaver, queueOptions?: ManagerQueueOptions) {
         super(guildId, data, QueueSaver, queueOptions);
@@ -20,12 +23,23 @@ export class Queue extends Qe {
         this.manager = manager; // Assign the manager
         this.queueChangesCustom = queueOptions?.queueChangesWatcher || null;
         this.guildIdCustom = guildId;
+        this.managerUtilsCustom = new ManagerUtils(this.manager);
 
         // this.previous = Array.isArray(data.previous) && data.previous.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.previous.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
         // this.tracks = Array.isArray(data.tracks) && data.tracks.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.tracks.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
     };
-
-    /** leaves the queue empty and sets the given tracks to the queue */
+    /** returns true if the queue is shuffled */
+    get shuffled() {
+        return this.isShuffled;
+    };
+    /**
+     * leaves the queue empty and sets the given tracks to the queue
+     * @example
+     * ```ts
+     * player.queue.setTracks = [track1, track2, track3]; // sets tracks
+     * player.queue.setTracks = []; // clears tracks
+     * ```
+     */
     public set setTracks(trackOrTracks: TrackOrTracks) {
         let tracksAdded: (Track | UnresolvedTrack)[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
             .filter(v => this.managerUtilsCustom.isTrack(v) || this.managerUtilsCustom.isUnresolvedTrack(v))
@@ -50,12 +64,21 @@ export class Queue extends Qe {
                 return track;
             })
             ;
-        if (tracksAdded.length) this.tracks.splice(0, this.tracks.length, ...tracksAdded)
-        else this.tracks.splice(0, this.tracks.length);
+        if (tracksAdded.length) {
+            this.tracks.splice(0, this.tracks.length, ...tracksAdded);
+            if (this.shuffled) this.backup.push(...tracksAdded);
+        } else this.tracks.splice(0, this.tracks.length);
     }
 
-    /** leaves the previous tracks empty and sets the given tracks to the previous tracks */
-    public set setPrevious(trackOrTracks: TrackOrTracks) {
+    /**
+     * leaves the previous tracks empty and sets the given tracks to the previous trackss
+     * @example
+     * ```ts
+     * player.queue.setPrevious = [track1, track2, track3]; // sets tracks
+     * player.queue.setPrevious = []; // clears tracks
+     * ```
+     */
+    public set setPrevious(trackOrTracks: Track | Track[]) {
         let tracksAdded: Track[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
             .filter(v => this.managerUtilsCustom.isTrack(v))
             .map((track) => {
@@ -72,7 +95,10 @@ export class Queue extends Qe {
                 return track;
             })
             ;
-        if (tracksAdded.length) this.previous.splice(0, this.previous.length, ...tracksAdded)
+        if (tracksAdded.length) {
+            this.previous.splice(0, this.previous.length, ...tracksAdded);
+            if (this.shuffled) this.backup.unshift(...tracksAdded);
+        }
         else this.previous.splice(0, this.previous.length);
     }
 
@@ -111,7 +137,7 @@ export class Queue extends Qe {
             ;
 
         if (typeof index === "number" && index >= 0 && index < this.tracks.length) {
-            const splice = await this.splice(index, 0, trackOrTracks);
+            const splice = await this.splice(index, 0, tracksAdded);
             return splice
         }
 
@@ -125,7 +151,9 @@ export class Queue extends Qe {
             } catch (error) {
                 throw error
             }
-        }
+        };
+
+        if (this.shuffled) this.backup.push(...tracksAdded);
 
         // save the queue
         await this.utils.save();
@@ -178,17 +206,16 @@ export class Queue extends Qe {
 
         // if no tracks to splice, add the tracks
         if (!this.tracks.length) {
-            if (trackOrTracks) return await this.add(trackOrTracks, start);
-
+            if (tracksAdded.length) return await this.add(tracksAdded, start);
         }
         // Log if available
-        if ((trackOrTracks) && typeof this.queueChangesCustom?.tracksAdd === "function") {
+        if ((tracksAdded) && typeof this.queueChangesCustom?.tracksAdd === "function") {
             try {
                 this.queueChangesCustom.tracksAdd(this.guildIdCustom, tracksAdded, start, oldStored!, this.utils.toJSON());
             } catch { };
         }
         // remove the tracks (and add the new ones)
-        let spliced = trackOrTracks ? this.tracks.splice(start, deleteCount, ...tracksAdded) : this.tracks.splice(start, deleteCount);
+        let spliced = tracksAdded.length ? this.tracks.splice(start, deleteCount, ...tracksAdded) : this.tracks.splice(start, deleteCount);
         // get the spliced array
         spliced = (Array.isArray(spliced) ? spliced : [spliced]);
         // Log if available
@@ -200,10 +227,69 @@ export class Queue extends Qe {
         // save the queue
         await this.utils.save();
 
+        if (tracksAdded.length && this.shuffled) this.backup.push(...tracksAdded);
+
         return {
             queueSize: this.tracks.length,
             tracks: this.tracks,
             tracksAdded: tracksAdded
         }
+    };
+
+    /**
+     * Shuffles the current Queue, then saves it.
+     * This method is simple. Consider using toggleShuffle() for a more advanced implementation.
+     */
+    public async shuffle(): Promise<number> {
+        return await super.shuffle();
+    };
+
+    /** enables/disables shuffle of the entire queue */
+    public toggleShuffle(): (Track | UnresolvedTrack)[] {
+        if (this.shuffled) {
+            this.isShuffled = false;
+            let currentTrackIndex = this.previous.length;
+            
+            let bc = this.backup.filter(t => {
+                const cids = [];
+                if (this.previous.length) cids.push(...this.previous.map(t => t.userData!.cid));
+                if (this.current) cids.push(this.current.userData!.cid);
+                if (this.tracks.length) cids.push(...this.tracks.map(t => t.userData!.cid));
+                // only add the tracks that are in the current queue
+                if (cids.includes(t.userData!.cid)) return true
+                else return false;
+            });
+            if (this.current) bc = this.backup.filter(t => this.current?.userData!.cid === t.userData!.cid)
+            // restore queue
+            this.setPrevious = bc.slice(0, currentTrackIndex).filter(t => this.managerUtilsCustom.isTrack(t));
+            this.setTracks = bc.slice(currentTrackIndex);
+        } else {
+            this.isShuffled = true;
+            this.backup = [];
+            if (this.previous.length) this.backup.push(...[...this.previous].reverse());
+            if (this.current) this.backup.push(this.current);
+            if (this.tracks.length) this.backup.push(...this.tracks);
+            // shuffle the queue
+            this.setPrevious = this.shufflePrevious(this.previous);
+            this.setTracks = this.shuffleTracks(this.tracks);
+        }
+        return this.tracks;
     }
+
+    private shuffleTracks(array: (Track | UnresolvedTrack)[]): (Track | UnresolvedTrack)[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    private shufflePrevious(array: Track[]): Track[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
 }
