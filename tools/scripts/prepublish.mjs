@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
-import { Esm } from "../../libs/utils/dist/esm/index.js";
+import { Esm } from "@ariijs/utils";
 import "colors";
 
 const __dirname = Esm.getDirname(import.meta.url);

@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@ariijs/utils": "^1.0.0",
     "colors": "^1.4.0"
   }
 }
