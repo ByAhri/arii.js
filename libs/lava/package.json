@@ -1,6 +1,6 @@
 {
   "name": "@ariijs/lavalink-client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "arii \"plugin\" / extras for lavalink-client package. fully compatible with commonjs and esm enviroments.",
   "type": "module",
   "main": "./dist/cjs/index.js",

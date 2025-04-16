@@ -4,9 +4,11 @@ import { Track, UnresolvedTrack, ManagerOptions as MO } from "lavalink-client";
 export type TrackOrTracks = Track | UnresolvedTrack | (Track | UnresolvedTrack)[];
 
 export interface QueueResult {
-    /** size of the queue after modification */
-    queueSize: number;
-    /** the total tracks after modification */
+    /** tracks in the previous list */
+    previous: Track[];
+    /** current track if any */
+    current: Track | null | undefined;
+    /** tracks in the next list */
     tracks: (Track | UnresolvedTrack)[];
     /** the tracks that were added */
     tracksAdded: (Track | UnresolvedTrack)[];

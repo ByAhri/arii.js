@@ -10,8 +10,8 @@ export class Tokens {
      * @throws TypeError if the epoch is not a number, bigint or Date
      * @example 
      * ```ts
-     * import { Snowflake } from "@byahri/utils";
-     * const sknowflake = Snowflake.generate(); // 1360324839772000256n
+     * import { Tokens } from "@byahri/utils";
+     * const sknowflake = Tokens.getSnowflake(); // 1360324839772000256n
      * console.log(snowflake.toString()); // 1360324839772000256
      * ```
      */
