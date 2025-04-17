@@ -8,8 +8,8 @@ export class Esm {
      * @returns returns the __dirname value for ESM environments
      * @example
      * ```ts
-     * import { AriiEsm } from "@byahri/utils";
-     * const __dirname = AriiEsm.getDirname(import.meta.url);
+     * import { Esm } from "@ariijs/utils";
+     * const __dirname = Esm.getDirname(import.meta.url);
      * console.log(__dirname); // /path/to/your/module
      * ```
      */
@@ -23,19 +23,34 @@ export class Esm {
      * @returns returns the __filename value for ESM environments
      * @example
      * ```ts
-     * import { AriiEsm } from "@byahri/utils";
-     * const __filename = AriiEsm.getFilename(import.meta.url);
+     * import { Esm } from "@ariijs/utils";
+     * const __filename = Esm.getFilename(import.meta.url);
      * console.log(__filename); // /path/to/your/module/index.js
      * ```
      */
     static getFilename(importMetaUrl: string) {
-        // Define __filename for ESM modules
+        // Ensure the URL is valid for Windows environments
+        if (!importMetaUrl.startsWith("file://")) {
+            importMetaUrl = `file://${importMetaUrl}`;
+        }
         return fileURLToPath(importMetaUrl);
     };
 
     /**
      * 
      * @returns returns an object containing path info: dirname, filename, basename, and extension
+     * @example
+     * ```ts
+     * import { Esm } from "@ariijs/utils";
+     * const pathInfo = Esm.getPathInfo(import.meta.url);
+     * console.log(pathInfo);
+     * // {
+     * //   dirname: '/path/to/your/module',
+     * //   filename: '/path/to/your/module/index.js',
+     * //   basename: 'index.js',
+     * //   extension: '.js'
+     * // }
+     * ```
      */
     static getPathInfo(importMetaUrl: string) {
         const filename = this.getFilename(importMetaUrl);

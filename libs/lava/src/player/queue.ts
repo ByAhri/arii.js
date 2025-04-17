@@ -4,8 +4,6 @@ import { Tokens } from "@ariijs/utils";
 import { LavalinkManager } from "../manager/lavalinkManager.js";
 
 export class Queue extends Qe {
-    // public tracks: (Track | UnresolvedTrack)[] = [];
-    // public previous: Track[] = [];
 
     protected isShuffled: boolean = false;
     backup: (Track | UnresolvedTrack)[] = [];
@@ -23,9 +21,6 @@ export class Queue extends Qe {
         this.queueChangesCustom = queueOptions?.queueChangesWatcher || null;
         this.guildIdCustom = guildId;
         this.managerUtilsCustom = new ManagerUtils(this.manager);
-
-        // this.previous = Array.isArray(data.previous) && data.previous.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.previous.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
-        // this.tracks = Array.isArray(data.tracks) && data.tracks.some(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) ? data.tracks.filter(track => this.managerUtilsCustom.isTrack(track) || this.managerUtilsCustom.isUnresolvedTrack(track)) : [];
     };
     /** returns true if the queue is shuffled */
     get shuffled() {
@@ -35,19 +30,17 @@ export class Queue extends Qe {
      * leaves the queue empty and sets the given tracks to the queue
      * @example
      * ```ts
-     * player.queue.setTracks = [track1, track2, track3]; // sets tracks
-     * player.queue.setTracks = []; // clears tracks
+     * player.queue.setTracks([track1, track2, track3]); // sets tracks
+     * player.queue.setTracks(); // clears tracks
      * ```
      */
-    public set setTracks(trackOrTracks: TrackOrTracks) {
+    public async setTracks(trackOrTracks: TrackOrTracks = []) {
         let tracksAdded: (Track | UnresolvedTrack)[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
             .filter(v => this.managerUtilsCustom.isTrack(v) || this.managerUtilsCustom.isUnresolvedTrack(v))
             .map((track) => {
-                // if (!track.userData?.cid) {
-                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
-                    if (!track.userData) track.userData = { cid: snowflake }
-                    else track.userData.cid = snowflake;
-                // };
+                const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                if (!track.userData) track.userData = { cid: snowflake }
+                else track.userData.cid = snowflake;
                 // if track source is played from provider, add the arl to the userData
                 // check if any arls are defined in the lavalink manager constructor
                 if (this.manager.deezer && (this.manager.deezer.arls?.length || this.manager.deezer.premiumArls?.length)) {
@@ -65,25 +58,24 @@ export class Queue extends Qe {
             this.tracks.splice(0, this.tracks.length, ...tracksAdded);
             if (this.shuffled) this.pushToBackup(tracksAdded);
         } else this.tracks.splice(0, this.tracks.length);
+        await this.utils.save();
     };
 
     /**
-     * leaves the previous tracks empty and sets the given tracks to the previous trackss
+     * leaves the previous tracks empty and sets the given tracks to the previous tracks
      * @example
      * ```ts
-     * player.queue.setPrevious = [track1, track2, track3]; // sets tracks
-     * player.queue.setPrevious = []; // clears tracks
+     * player.queue.setPrevious([track1, track2, track3]); // sets tracks
+     * player.queue.setPrevious(); // clears tracks
      * ```
      */
-    public set setPrevious(trackOrTracks: Track | Track[]) {
+    public async setPrevious(trackOrTracks: Track | Track[] = []) {
         let tracksAdded: Track[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
             .filter(v => this.managerUtilsCustom.isTrack(v))
             .map((track) => {
-                // if (!track.userData?.cid) {
-                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
-                    if (!track.userData) track.userData = { cid: snowflake }
-                    else track.userData.cid = snowflake;
-                // };
+                const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                if (!track.userData) track.userData = { cid: snowflake }
+                else track.userData.cid = snowflake;
                 // if track source is played from provider, add the arl to the userData
                 // check if any arls are defined in the lavalink manager constructor
                 if (this.manager.deezer && (this.manager.deezer.arls?.length || this.manager.deezer.premiumArls?.length)) {
@@ -101,23 +93,22 @@ export class Queue extends Qe {
             this.previous.splice(0, this.previous.length, ...tracksAdded);
             if (this.shuffled) this.unshiftToBackup(tracksAdded);
         } else this.previous.splice(0, this.previous.length);
+        await this.utils.save();
     };
 
     /**
      * Add a Track to the Queue, and after saved in the "db" it returns the amount of the Tracks
      * @param TrackOrTracks Track or Tracks to add to the queue
      * @param index At what position to add the Track
-     * @returns queue size, total tracks and tracks added
+     * @returns previous tracks, current track, next tracks and tracks added
      */
     public async add(trackOrTracks: TrackOrTracks, index?: number): Promise<QueueResult> {
         let tracksAdded: (Track | UnresolvedTrack)[] = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
             .filter(v => this.managerUtilsCustom.isTrack(v) || this.managerUtilsCustom.isUnresolvedTrack(v))
             .map((track) => {
-                // if (!track.userData?.cid) {
-                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
-                    if (!track.userData) track.userData = { cid: snowflake }
-                    else track.userData.cid = snowflake;
-                // };
+                const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                if (!track.userData) track.userData = { cid: snowflake }
+                else track.userData.cid = snowflake;
                 // if track source is played from provider, add the arl to the userData
                 // check if any arls are defined in the lavalink manager constructor
                 if (this.manager.deezer && (this.manager.deezer.arls?.length || this.manager.deezer.premiumArls?.length)) {
@@ -167,7 +158,7 @@ export class Queue extends Qe {
      * @param start Where to remove the Track
      * @param deleteCount How many Tracks to remove?
      * @param TrackOrTracks Want to Add more Tracks?
-     * @returns queue size, total tracks and tracks added if any
+     * @returns previous tracks, current track, next tracks and tracks added if any
      */
     public async splice(start: number, deleteCount: number, trackOrTracks?: TrackOrTracks): Promise<QueueResult> {
         let tracksAdded: (Track | UnresolvedTrack)[] = [];
@@ -176,11 +167,9 @@ export class Queue extends Qe {
             tracksAdded = (Array.isArray(trackOrTracks) ? trackOrTracks : [trackOrTracks])
                 .filter(v => this.managerUtilsCustom.isTrack(v) || this.managerUtilsCustom.isUnresolvedTrack(v))
                 .map((track) => {
-                    // if (!track.userData?.cid) {
-                        const snowflake = Tokens.getRandomToken(); // generate a new id for each track
-                        if (!track.userData) track.userData = { cid: snowflake }
-                        else track.userData.cid = snowflake;
-                    // };
+                    const snowflake = Tokens.getRandomToken(); // generate a new id for each track
+                    if (!track.userData) track.userData = { cid: snowflake }
+                    else track.userData.cid = snowflake;
                     // if track source is played from provider, add the arl to the userData
                     // check if any arls are defined in the lavalink manager constructor
                     if (this.manager.deezer && (this.manager.deezer.arls?.length || this.manager.deezer.premiumArls?.length)) {
@@ -242,10 +231,11 @@ export class Queue extends Qe {
 
     /**
      * enables/disables shuffle of the entire queue 
+     * @param [shuffle=false] - true to simply shuffle the queue. this will shuffle the queue and won't be reversible. DON'T SET THIS TO TRUE IF you only want to toggle on shuffle mode. useful when you want to re-shuffle the queue when it's already shuffled on.
      * @returns previous tracks, current track and next tracks in the queue
      */
-    public toggleShuffle(): QueueResult {
-        if (this.shuffled) {
+    public async toggleShuffle(shuffle: boolean = false): Promise<QueueResult> {
+        if (this.shuffled && !shuffle) {
             this.isShuffled = false;
             let currentTrackIndex = this.previous.length;
 
@@ -260,28 +250,24 @@ export class Queue extends Qe {
             });
             if (this.current) bc = bc.filter(t => this.current?.userData!.cid !== t.userData!.cid)
             // restore queue
-            // const prev = [...bc.slice(0, currentTrackIndex).filter(t => this.managerUtilsCustom.isTrack(t))].reverse(),
-            //     tracks = bc.slice(currentTrackIndex);
-
-            // console.log("backup: ", this.backup.map(t => t.info.title));
-            // console.log("bc: ", bc.map(t => t.info.title));
-            // console.log("prev: ", prev.map(t => t.info.title));
-            // console.log("tracks: ", tracks.map(t => t.info.title));
-            this.setPrevious = [...bc.slice(0, currentTrackIndex).filter(t => this.managerUtilsCustom.isTrack(t))].reverse();
-            this.setTracks = bc.slice(currentTrackIndex);
+            await this.setPrevious([...bc.slice(0, currentTrackIndex).filter(t => this.managerUtilsCustom.isTrack(t))].reverse());
+            await this.setTracks(bc.slice(currentTrackIndex));
         } else {
-            this.isShuffled = true;
-            this.backup = [];
-            if (this.previous.length) this.backup.push(...[...this.previous].reverse());
-            if (this.current) this.backup.push(this.current);
-            if (this.tracks.length) this.backup.push(...this.tracks);
+            if (!shuffle) {
+                this.isShuffled = true;
+                this.backup = [];
+                if (this.previous.length) this.backup.push(...[...this.previous].reverse());
+                if (this.current) this.backup.push(this.current);
+                if (this.tracks.length) this.backup.push(...this.tracks);
+            };
             // shuffle the queue
             const prev = this.shufflePrevious(this.previous),
                 tracks = this.shuffleTracks(this.tracks);
-            
+
             this.previous.splice(0, this.previous.length, ...prev);
             this.tracks.splice(0, this.tracks.length, ...tracks);
-        }
+        };
+        await this.utils.save();
         return {
             previous: this.previous,
             current: this.current,

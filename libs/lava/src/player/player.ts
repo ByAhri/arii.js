@@ -1,4 +1,4 @@
-import { Player as PL, PlayerOptions, QueueSaver, RepeatMode } from "lavalink-client";
+import { Player as PL, PlayerOptions, QueueSaver, RepeatMode, Track, UnresolvedTrack } from "lavalink-client";
 import { Queue } from "./queue.js";
 import { LavalinkManager } from "../manager/lavalinkManager.js";
 
@@ -15,6 +15,77 @@ export class Player extends PL {
 
         let queueSaver = this.LavalinkManager.options.queueOptions ? new QueueSaver(this.LavalinkManager.options.queueOptions) : undefined
         this.queue = new Queue(this.guildId, this.LavalinkManager, {}, queueSaver, this.LavalinkManager.options.queueOptions); // Initialize with AriiQueue
+    };
+
+    /**
+     * Skip the current song, or a specific amount of songs
+     * @param skipTo provide the index of the next track to skip to or a string to search for a track title
+     * @param throwError if true, throws an error if the skip fails
+     * @param [withPrevious=false] set true to enable full queue skipping (previous tracks included)
+     */
+    async skip(skipTo: number | string = 0, throwError: boolean = true, withPrevious: boolean = false): Promise<this> {
+        let arr = this.queue.tracks;
+
+        if (withPrevious) {
+            arr = [];
+            if (this.queue.previous.length) arr.push(...[...this.queue.previous].reverse());
+            if (this.queue.current) arr.push(this.queue.current);
+            if (this.queue.tracks.length) arr.push(...this.queue.tracks);
+        };
+
+        if (!arr.length && (throwError || (typeof skipTo === "boolean" && skipTo === true))) {
+            throw new RangeError("Can't skip more than the queue size");
+        }
+
+        let targetIndex = 0;
+
+        if (typeof skipTo === "number" || (typeof skipTo === "string" && !isNaN(Number(skipTo)))) {
+            targetIndex = Number(skipTo);
+            if (targetIndex >= arr.length || targetIndex < 0) {
+                throw new RangeError("Can't skip more than the queue size");
+            };
+        } else if (typeof skipTo === "string") {
+            const lowerSkipTo = skipTo.toLowerCase();
+            targetIndex = arr.findIndex(track => track.info.title.toLowerCase().includes(lowerSkipTo));
+            if (targetIndex === -1) {
+                throw new RangeError("No track found matching the provided title");
+            }
+        }
+        // i don't even know. finally working. 💋
+        let currentTrackIndex = this.queue.previous.length;
+        if (skipTo && withPrevious) {
+            if (targetIndex > currentTrackIndex) {
+                const set = arr.slice(0, targetIndex) as Track[];
+                await this.queue.setPrevious([...set].reverse());
+                await this.queue.setTracks(arr.slice(targetIndex));
+            } else if (targetIndex < currentTrackIndex) {
+                const set: (Track | UnresolvedTrack)[] = arr.slice(targetIndex);
+                await this.queue.setTracks(set);
+                await this.queue.setPrevious([...arr.slice(0, targetIndex)].reverse() as Track[]);
+            }
+
+        } else if (skipTo && !withPrevious && targetIndex > 1) {
+            await this.queue.splice(0, targetIndex - 1);
+        };
+
+        if (!this.playing && !this.queue.current) {
+            this.play();
+            return this;
+        };
+
+        const now = performance.now();
+        this.set("internal_skipped", true);
+
+        if (this.queue.current) {
+            await this.node.updatePlayer({ guildId: this.guildId, playerOptions: { track: { encoded: null }, paused: false } });
+            if (skipTo && withPrevious) await this.queue.shiftPrevious();
+        } else {
+            await this.node.updatePlayer({ guildId: this.guildId, playerOptions: { track: { encoded: null }, paused: false } });
+        };
+
+        this.ping.lavalink = Math.round((performance.now() - now) / 10) / 100;
+
+        return this;
     };
 
     /**
@@ -49,5 +120,5 @@ export class Player extends PL {
         this.ping.lavalink = Math.round((performance.now() - now) / 10) / 100;
 
         return this;
-    }
+    };
 }
