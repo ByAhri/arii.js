@@ -1,6 +1,7 @@
 import { Player as PL, PlayerOptions, QueueSaver, RepeatMode, Track, UnresolvedTrack } from "lavalink-client";
 import { Queue } from "./queue.js";
 import { LavalinkManager } from "../manager/lavalinkManager.js";
+import { Utils, Format } from "@ariijs/utils";
 
 export class Player extends PL {
     LavalinkManager: LavalinkManager;
@@ -34,7 +35,8 @@ export class Player extends PL {
         };
 
         if (!arr.length && (throwError || (typeof skipTo === "boolean" && skipTo === true))) {
-            throw new RangeError("Can't skip more than the queue size");
+            if (throwError) throw new RangeError("Can't skip more than the queue size")
+            else return this;
         }
 
         let targetIndex = 0;
@@ -42,16 +44,26 @@ export class Player extends PL {
         if (typeof skipTo === "number" || (typeof skipTo === "string" && !isNaN(Number(skipTo)))) {
             targetIndex = Number(skipTo);
             if (targetIndex >= arr.length || targetIndex < 0) {
-                throw new RangeError("Can't skip more than the queue size");
+                if (throwError) throw new RangeError("Can't skip more than the queue size")
+                else return this;
             };
         } else if (typeof skipTo === "string") {
-            const lowerSkipTo = skipTo.toLowerCase();
-            targetIndex = arr.findIndex(track => track.info.title.toLowerCase().includes(lowerSkipTo));
-            if (targetIndex === -1) {
-                throw new RangeError("No track found matching the provided title");
+            const lowerSkipTo = Format.accentToNormal(skipTo.toLowerCase());
+            const titles = arr.map(track => {
+                let t = Format.accentToNormal(track.info.title.toLowerCase());
+                if (track.info.author) t += " " + Format.accentToNormal(track.info.author.toLowerCase());
+                return t;
+            });
+            const result = Utils.findMostSimilar(lowerSkipTo, titles, 20); // Adjust threshold as needed
+
+            if (!result) {
+                if (throwError) throw new RangeError("No sufficiently similar track found matching the provided title")
+                else return this;
             }
+
+            targetIndex = titles.indexOf(result.match); // Get the index of the best match
         }
-        // i don't even know. finally working. 💋
+
         let currentTrackIndex = this.queue.previous.length;
         if (skipTo && withPrevious) {
             if (targetIndex > currentTrackIndex) {
@@ -108,14 +120,13 @@ export class Player extends PL {
 
         this.queue.previous.shift(); // remove previous track from previous list cause it's gonna go next now
 
-        this.skip()
-            .then(player => {
-                // after skipping, the current track will be added to the previous list, so we remove it too cause it's after the next track (former previous)
-                if (currentTrack) player.queue.previous.shift();
-            })
-            .catch(e => {
-                console.error(e);
-            });
+        try {
+            await this.skip();
+        } catch (error) {
+            throw error;
+        };
+
+        if (currentTrack) this.queue.previous.shift();
 
         this.ping.lavalink = Math.round((performance.now() - now) / 10) / 100;
 

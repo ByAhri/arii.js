@@ -1,6 +1,6 @@
 {
   "name": "@ariijs/utils",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "utility functions that i use for arii and more",
   "type": "module",
   "main": "./dist/cjs/index.js",
@@ -37,7 +37,8 @@
   "homepage": "https://github.com/ByAhri/arii.js#readme",
   "dependencies": {
     "@sapphire/snowflake": "^3.5.5",
-    "colors": "^1.4.0"
+    "colors": "^1.4.0",
+    "fuzzball": "^2.2.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
