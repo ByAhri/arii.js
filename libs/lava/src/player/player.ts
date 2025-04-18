@@ -26,6 +26,7 @@ export class Player extends PL {
      */
     async skip(skipTo: number | string = 0, throwError: boolean = true, withPrevious: boolean = false): Promise<this> {
         let arr = this.queue.tracks;
+        const withError = (throwError || (typeof skipTo === "boolean" && skipTo === true));
 
         if (withPrevious) {
             arr = [];
@@ -34,9 +35,8 @@ export class Player extends PL {
             if (this.queue.tracks.length) arr.push(...this.queue.tracks);
         };
 
-        if (!arr.length && (throwError || (typeof skipTo === "boolean" && skipTo === true))) {
-            if (throwError) throw new RangeError("Can't skip more than the queue size")
-            else return this;
+        if (!arr.length && withError) {
+            throw new RangeError("Can't skip more than the queue size");
         }
 
         let targetIndex = 0;
@@ -44,7 +44,7 @@ export class Player extends PL {
         if (typeof skipTo === "number" || (typeof skipTo === "string" && !isNaN(Number(skipTo)))) {
             targetIndex = Number(skipTo);
             if (targetIndex >= arr.length || targetIndex < 0) {
-                if (throwError) throw new RangeError("Can't skip more than the queue size")
+                if (withError) throw new RangeError("Can't skip more than the queue size")
                 else return this;
             };
         } else if (typeof skipTo === "string") {
@@ -57,15 +57,15 @@ export class Player extends PL {
             const result = Utils.findMostSimilar(lowerSkipTo, titles, 20); // Adjust threshold as needed
 
             if (!result) {
-                if (throwError) throw new RangeError("No sufficiently similar track found matching the provided title")
+                if (withError) throw new RangeError("No sufficiently similar track found matching the provided title")
                 else return this;
             }
 
             targetIndex = titles.indexOf(result.match); // Get the index of the best match
-        }
+        };
 
         let currentTrackIndex = this.queue.previous.length;
-        if (skipTo && withPrevious) {
+        if (["string", "number"].includes(typeof skipTo) && withPrevious) {
             if (targetIndex > currentTrackIndex) {
                 const set = arr.slice(0, targetIndex) as Track[];
                 await this.queue.setPrevious([...set].reverse());
@@ -90,7 +90,7 @@ export class Player extends PL {
 
         if (this.queue.current) {
             await this.node.updatePlayer({ guildId: this.guildId, playerOptions: { track: { encoded: null }, paused: false } });
-            if (skipTo && withPrevious) await this.queue.shiftPrevious();
+            if (["string", "number"].includes(typeof skipTo) && withPrevious) await this.queue.shiftPrevious();
         } else {
             await this.node.updatePlayer({ guildId: this.guildId, playerOptions: { track: { encoded: null }, paused: false } });
         };
