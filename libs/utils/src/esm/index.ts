@@ -64,8 +64,11 @@ export class Esm {
      * @example
      * ```ts
      * import { Esm } from "@ariijs/utils";
-     * const modulePath = C:/path/to/module.js;
-     * const module = await Esm.import(modulePath);
+     * const modulePath = "C:\\...\\path\\to\\your\\module.js"; // this type of path can be returned using, e.g.
+     * path.join(__dirname, "../path/to/your", jsFile); // on windows platform
+     * 
+     * const module = await import(modulePath); // this will throw an error on windows platform
+     * const module = await Esm.import(modulePath); // this will work on windows platform as well as linux etc.
      * ```
      * @returns 
      */
