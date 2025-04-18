@@ -1,4 +1,4 @@
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import { dirname, basename, extname } from "path";
 
 export class Esm {
@@ -29,10 +29,6 @@ export class Esm {
      * ```
      */
     static getFilename(importMetaUrl: string) {
-        // Ensure the URL is valid for Windows environments
-        if (!importMetaUrl.startsWith("file://")) {
-            importMetaUrl = `file://${importMetaUrl}`;
-        }
         return fileURLToPath(importMetaUrl);
     };
 
@@ -61,4 +57,31 @@ export class Esm {
             extension: extname(filename),
         };
     };
+
+    /**
+     * import a module using dynamic import avoiding errors on windows platform using windows path protocols
+     * @param modulePath - the path to the module to import
+     * @example
+     * ```ts
+     * import { Esm } from "@ariijs/utils";
+     * const modulePath = C:/path/to/module.js;
+     * const module = await Esm.import(modulePath);
+     * ```
+     * @returns 
+     */
+    static async import(modulePath: string): Promise<any> {
+        if (process.platform === "win32") {
+            // check if path is a windows protocol path instead od valid url path (e.g. file:///C:/path/to/file.js)
+            if (modulePath.startsWith("C:") || modulePath.startsWith("D:")) {
+                modulePath = pathToFileURL(modulePath).href;
+            };
+        }
+        let imp;
+        try {
+            imp = await import(modulePath);
+        } catch (error) {
+            throw error;
+        }
+        return imp;
+    }
 }

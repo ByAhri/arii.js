@@ -1,6 +1,6 @@
 {
   "name": "@ariijs/utils",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "utility functions that i use for arii and more",
   "type": "module",
   "main": "./dist/cjs/index.js",
