@@ -2,6 +2,7 @@ import { Player as PL, PlayerOptions, QueueSaver, RepeatMode, Track, UnresolvedT
 import { Queue } from "./queue.js";
 import { LavalinkManager } from "../manager/lavalinkManager.js";
 import { Utils, Format } from "@ariijs/utils";
+import { SimilarSearchOptions } from "../types/index.js";
 
 export class Player extends PL {
     LavalinkManager: LavalinkManager;
@@ -23,10 +24,13 @@ export class Player extends PL {
      * @param skipTo provide the index of the next track to skip to or a string to search for a track title
      * @param throwError if true, throws an error if the skip fails
      * @param [withPrevious=false] set true to enable full queue skipping (previous tracks included)
+     * @param searchOptions search options for the skipTo string search
      */
-    async skip(skipTo: number | string = 0, throwError: boolean = true, withPrevious: boolean = false): Promise<this> {
+    async skip(skipTo: number | string = 0, throwError: boolean = true, withPrevious: boolean = false, searchOptions?: SimilarSearchOptions): Promise<this> {
         let arr = this.queue.tracks;
         const withError = (throwError || (typeof skipTo === "boolean" && skipTo === true));
+        const withAuthor = searchOptions?.withAuthor ?? false;
+        const threshold = searchOptions?.threshold ?? 20; // Use user-provided threshold or default to 20
 
         if (withPrevious) {
             arr = [];
@@ -48,13 +52,13 @@ export class Player extends PL {
                 else return this;
             };
         } else if (typeof skipTo === "string") {
-            const lowerSkipTo = Format.accentToNormal(skipTo.toLowerCase());
+            const lowerSkipTo = skipTo.toLowerCase(); // allow accented characters to be used in the search
             const titles = arr.map(track => {
-                let t = Format.accentToNormal(track.info.title.toLowerCase());
-                if (track.info.author) t += " " + Format.accentToNormal(track.info.author.toLowerCase());
+                let t = track.info.title.toLowerCase(); // allow accented characters to be used in the search
+                if (track.info.author && withAuthor) t += " " + track.info.author.toLowerCase(); // allow accented characters to be used in the search
                 return t;
             });
-            const result = Utils.findMostSimilar(lowerSkipTo, titles, 20); // Adjust threshold as needed
+            const result = Utils.findMostSimilar(lowerSkipTo, titles, threshold); // Use user-provided threshold
 
             if (!result) {
                 if (withError) throw new RangeError("No sufficiently similar track found matching the provided title")

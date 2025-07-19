@@ -22,3 +22,10 @@ export interface DeezerManagerOptions {
     arls?: string[];
     premiumArls?: string[];
 }
+
+export interface SimilarSearchOptions {
+    /** the similarity threshold for fuzzy matching (default: 20) */
+    threshold?: number;
+    /** whether to include the author in the search (default: false) */
+    withAuthor?: boolean;
+}
