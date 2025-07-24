@@ -24,7 +24,7 @@ export interface DeezerManagerOptions {
 }
 
 export interface SimilarSearchOptions {
-    /** the similarity threshold for fuzzy matching (default: 20) */
+    /** the similarity threshold for fuzzy matching (default: 50) */
     threshold?: number;
     /** whether to include the author in the search (default: false) */
     withAuthor?: boolean;

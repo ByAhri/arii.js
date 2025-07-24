@@ -30,7 +30,7 @@ export class Player extends PL {
         let arr = this.queue.tracks;
         const withError = (throwError || (typeof skipTo === "boolean" && skipTo === true));
         const withAuthor = searchOptions?.withAuthor ?? false;
-        const threshold = searchOptions?.threshold ?? 20; // Use user-provided threshold or default to 20
+        const threshold = searchOptions?.threshold ?? 50; // Use user-provided threshold or default to 50
 
         if (withPrevious) {
             arr = [];
@@ -59,6 +59,11 @@ export class Player extends PL {
                 return t;
             });
             const result = Utils.findMostSimilar(lowerSkipTo, titles, threshold); // Use user-provided threshold
+
+            // if (!result) { // retry with a lower threshold
+            //     if (withError) throw new RangeError("No sufficiently similar track found matching the provided title")
+            //     else return this;
+            // }
 
             if (!result) {
                 if (withError) throw new RangeError("No sufficiently similar track found matching the provided title")
