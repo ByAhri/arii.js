@@ -24,12 +24,51 @@ export class Utils {
      * @returns The most similar string and its score, or null if no match is found.
      */
     static findMostSimilar(target: string, candidates: string[], threshold: number = 50): { match: string, score: number } | null {
-        const matches = extract(target, candidates, { scorer: ratio });
+        const normalize = (value: string) => value
+            .toLowerCase()
+            .normalize("NFKD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, " ")
+            .trim();
 
-        if (!matches.length || matches[0][1] < threshold) {
-            return null; // No sufficiently similar match found
+        const targetNormalized = normalize(target);
+        const targetTokens = targetNormalized.split(/\s+/).filter(Boolean);
+
+        if (!targetNormalized) return null;
+
+        let bestMatch: { match: string, score: number } | null = null;
+
+        for (const candidate of candidates) {
+            const candidateNormalized = normalize(candidate);
+            if (!candidateNormalized) continue;
+
+            const candidateTokens = candidateNormalized.split(/\s+/).filter(Boolean);
+            let score = ratio(targetNormalized, candidateNormalized);
+
+            if (targetNormalized === candidateNormalized) {
+                score = 100;
+            } else {
+                const includesBonus = targetNormalized.includes(candidateNormalized) || candidateNormalized.includes(targetNormalized)
+                    ? 18
+                    : 0;
+
+                const sharedTokens = targetTokens.filter(token => candidateTokens.includes(token));
+                const tokenOverlap = targetTokens.length && candidateTokens.length
+                    ? (sharedTokens.length / Math.max(targetTokens.length, candidateTokens.length)) * 30
+                    : 0;
+                const wordBonus = sharedTokens.length * 12;
+                const prefixBonus = targetTokens[0] && candidateTokens[0] && targetTokens[0] === candidateTokens[0]
+                    ? 8
+                    : 0;
+
+                score = Math.min(100, score * 0.65 + includesBonus + tokenOverlap + wordBonus + prefixBonus);
+            }
+
+            if (score >= threshold && (!bestMatch || score > bestMatch.score)) {
+                bestMatch = { match: candidate, score };
+            }
         }
 
-        return { match: matches[0][0], score: matches[0][1] }; // Return the best match and its score
+        return bestMatch;
     }
 }
