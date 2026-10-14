@@ -41,7 +41,7 @@
     "fuzzball": "^2.2.2"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.20.1",
     "typescript": "^5.8.3"
   }
 }

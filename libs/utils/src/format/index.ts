@@ -1,6 +1,3 @@
-import { Snowflake as SN } from "@sapphire/snowflake";
-import crypto from "crypto";
-
 export class Format {
 
     /**

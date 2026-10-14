@@ -1,6 +1,6 @@
 import { Snowflake as SN } from "@sapphire/snowflake";
 import crypto from "crypto";
-import { BufferEncoding, BufferEncodingType } from "../types/options.js"
+import { BufferEncoding } from "../types/options.js"
 
 export class Tokens {
     /**
